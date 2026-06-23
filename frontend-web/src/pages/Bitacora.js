@@ -60,7 +60,7 @@ const Bitacora = () => {
                                         logs.map((log, index) => (
                                             <tr key={index} style={styles.tableRow}>
                                                 <td style={styles.td}>{log.fecha}</td>
-                                                <td style={styles.tdBold}>{log.usuario.toUpperCase()}</td>
+                                                <td style={styles.tdBold}>{(log.usuario || 'SISTEMA').toUpperCase()}</td>
                                                 <td style={styles.td}>{log.accion}</td>
                                             </tr>
                                         ))

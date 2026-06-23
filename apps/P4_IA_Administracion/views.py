@@ -40,10 +40,10 @@ from .services.ai_service import AIService
 
 class LogAuditoriaAPIView(generics.ListAPIView):
     """
-    Endpoint de bitácora exclusivo para el Administrador de la clínica.
+    Endpoint de bitácora exclusivo para el Administrador de la clínica, o Psicólogos para ver trazabilidad de pacientes.
     """
     serializer_class = LogAuditoriaSerializer
-    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador, RequiresModuloAuditoria]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloAuditoria]
 
     def get_queryset(self):
         return LogAuditoria.objects.filter(clinica=self.request.user.clinica).order_by('-fecha')

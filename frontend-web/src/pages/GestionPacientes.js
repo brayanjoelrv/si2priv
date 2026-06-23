@@ -532,7 +532,7 @@ const GestionPacientes = () => {
                                                             <div style={styles.timelineDot}></div>
                                                             <div style={styles.timelineContent}>
                                                                 <div style={styles.timelineHeader}>
-                                                                    <span style={styles.timelineUser}>{log.usuario.toUpperCase()}</span>
+                                                                    <span style={styles.timelineUser}>{(log.usuario || 'SISTEMA').toUpperCase()}</span>
                                                                     <span style={styles.timelineDate}>{new Date(log.fecha).toLocaleString()}</span>
                                                                 </div>
                                                                 <p style={styles.timelineAction}>{log.accion}</p>

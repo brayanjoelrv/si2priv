@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import LogAuditoria, Transaccion, Comprobante
 
 class LogAuditoriaSerializer(serializers.ModelSerializer):
+    usuario = serializers.StringRelatedField()
     usuario_nombre = serializers.ReadOnlyField(source='usuario.username')
     fecha_formateada = serializers.SerializerMethodField()
 
