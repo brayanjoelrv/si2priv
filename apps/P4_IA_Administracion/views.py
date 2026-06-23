@@ -936,3 +936,62 @@ class ReporteCSVAPIView(APIView):
                 writer.writerow([t.fecha.strftime('%Y-%m-%d'), t.paciente.nombre, t.tipo, t.monto, t.concepto])
                 
         return response
+class VozReporteWebAPIView(APIView):
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
+
+    def post(self, request):
+        query = request.data.get('query', '')
+        if not query:
+            return Response({"error": "No se recibió consulta."}, status=status.HTTP_400_BAD_REQUEST)
+
+        clinica = request.user.clinica
+
+        filtros = AIService.interpretar_comando_voz(query)
+        if "error" in filtros:
+            return Response(filtros, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Detectar si habla de citas o pagos
+        entidad = 'citas'
+        if filtros.get('monto_min') or filtros.get('monto_max') or 'pago' in query.lower() or 'ingreso' in query.lower():
+            entidad = 'finanzas'
+
+        results = []
+        summary = ""
+
+        if entidad == 'citas':
+            citas_query = Cita.objects.filter(paciente__clinica=clinica)
+            if filtros.get('fecha_inicio'): citas_query = citas_query.filter(fecha_hora__date__gte=filtros['fecha_inicio'])
+            if filtros.get('fecha_fin'): citas_query = citas_query.filter(fecha_hora__date__lte=filtros['fecha_fin'])
+            if filtros.get('estado_cita'): citas_query = citas_query.filter(estado=filtros['estado_cita'].upper())
+            
+            citas_list = citas_query.order_by('-fecha_hora')[:20]
+            for c in citas_list:
+                results.append({
+                    "paciente": c.paciente.nombre,
+                    "fecha": c.fecha_hora.strftime("%d/%m %H:%M"),
+                    "estado": c.estado
+                })
+            count = citas_query.count()
+            summary = f"Señor Director, he encontrado {count} citas que coinciden con su criterio."
+            
+        else:
+            tx_query = Transaccion.objects.filter(paciente__clinica=clinica, tipo='PAGO')
+            if filtros.get('fecha_inicio'): tx_query = tx_query.filter(fecha__date__gte=filtros['fecha_inicio'])
+            if filtros.get('fecha_fin'): tx_query = tx_query.filter(fecha__date__lte=filtros['fecha_fin'])
+            if filtros.get('monto_min'): tx_query = tx_query.filter(monto__gte=filtros['monto_min'])
+            if filtros.get('monto_max'): tx_query = tx_query.filter(monto__lte=filtros['monto_max'])
+            
+            tx_list = tx_query.order_by('-fecha')[:20]
+            for t in tx_list:
+                results.append({
+                    "monto": str(t.monto),
+                    "concepto": t.concepto
+                })
+            count = tx_query.count()
+            summary = f"Director, se encontraron {count} registros de pagos bajo estos parámetros."
+
+        return Response({
+            "summary": summary,
+            "params": {"entidad": entidad},
+            "results": results
+        })

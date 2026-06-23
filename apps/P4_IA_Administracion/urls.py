@@ -20,7 +20,8 @@ from .views import (
     GenerarReporteMobileAPIView,
     AnaliticaClinicaAPIView,
     ReportePDFAPIView,
-    ReporteCSVAPIView
+    ReporteCSVAPIView,
+    VozReporteWebAPIView
 )
 
 router = SimpleRouter()
@@ -39,6 +40,7 @@ urlpatterns = [
     path("api/finanzas/comprobante/<int:transaccion_id>/pdf/", GenerarComprobantePDFView.as_view(), name="api_comprobante_pdf"),
     path("api/ia/reporte-pdf/", ReportePDFAPIView.as_view(), name="api_ia_reporte_pdf"),
     path("api/ia/reporte-csv/", ReporteCSVAPIView.as_view(), name="api_ia_reporte_csv"),
+    path("api/ia/voz-reporte/", VozReporteWebAPIView.as_view(), name="api_ia_voz_reporte"),
     path("api/reportes/personalizado/", ReportePersonalizadoAPIView.as_view(), name="api_reporte_personalizado"),
     path("api/reportes/voz/", VoiceToReportAPIView.as_view(), name="api_reportes_voz"),
 
