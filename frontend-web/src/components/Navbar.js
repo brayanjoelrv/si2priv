@@ -15,7 +15,33 @@ const Navbar = () => {
         const fetchNotificaciones = async () => {
             try {
                 const res = await apiClient.get('mobile/notificaciones/');
-                setNotificaciones(res.data);
+                
+                setNotificaciones(prev => {
+                    const newNotifs = res.data;
+                    
+                    // Solo notificar si hay un incremento real en los no leídos
+                    const prevUnreadIds = prev.filter(n => !n.leido).map(n => n.id);
+                    const currentUnread = newNotifs.filter(n => !n.leido);
+                    
+                    const reallyNew = currentUnread.filter(n => !prevUnreadIds.includes(n.id));
+                    
+                    if (reallyNew.length > 0) {
+                        const newest = reallyNew[0];
+                        // Lanzar notificación nativa (Push tipo WhatsApp Web)
+                        if ("Notification" in window) {
+                            if (Notification.permission === "granted") {
+                                new Notification(newest.titulo, { body: newest.mensaje, icon: "/favicon.ico" });
+                            } else if (Notification.permission !== "denied") {
+                                Notification.requestPermission().then(permission => {
+                                    if (permission === "granted") {
+                                        new Notification(newest.titulo, { body: newest.mensaje, icon: "/favicon.ico" });
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    return newNotifs;
+                });
             } catch (error) {
                 console.error("Error al obtener notificaciones:", error);
             }
