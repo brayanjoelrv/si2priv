@@ -45,6 +45,15 @@ def fix():
         cursor.execute("INSERT INTO django_migrations (app, name, applied) VALUES ('P2_Gestion_Clinica', '0008_notaclinica_archivoadjunto', NOW());")
         cursor.execute("INSERT INTO django_migrations (app, name, applied) VALUES ('P2_Gestion_Clinica', '0009_remove_evolucion_cita_remove_evolucion_paciente_and_more', NOW());")
         print("django_migrations fixed.")
+        
+        # Retroactivamente enlazar la clinica a las bitácoras antiguas
+        cursor.execute("""
+            UPDATE "P4_IA_Administracion_logauditoria" log
+            SET clinica_id = usr.clinica_id
+            FROM "P1_Identidad_Acceso_usuario" usr
+            WHERE log.usuario_id = usr.id AND log.clinica_id IS NULL;
+        """)
+        print("LogAuditoria retroactively linked to clinicas.")
     except Exception as e:
         print("ERROR in fix_db:", e)
 

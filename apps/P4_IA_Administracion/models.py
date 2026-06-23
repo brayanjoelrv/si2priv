@@ -18,6 +18,12 @@ class LogAuditoria(models.Model):
     def __str__(self):
         return f"[{self.fecha.strftime('%Y-%m-%d %H:%M')}] {self.usuario} - {self.accion}"
 
+    def save(self, *args, **kwargs):
+        if not self.clinica and self.usuario and hasattr(self.usuario, 'clinica'):
+            self.clinica = self.usuario.clinica
+        super().save(*args, **kwargs)
+
+
 # ==============================================================================
 # MÓDULO FINANCIERO (T058, T059)
 # ==============================================================================
