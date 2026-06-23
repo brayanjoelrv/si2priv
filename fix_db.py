@@ -19,6 +19,9 @@ def fix():
                 "psicologo_id" integer NULL
             );
         """)
+        cursor.execute("""
+            ALTER TABLE "P2_Gestion_Clinica_notaclinica" ADD COLUMN IF NOT EXISTS "psicologo_id" integer NULL;
+        """)
         print("NotaClinica ensured.")
         
         # Ensure ArchivoAdjunto table exists
@@ -31,6 +34,9 @@ def fix():
                 "expediente_id" bigint NOT NULL,
                 "subido_por_id" integer NULL
             );
+        """)
+        cursor.execute("""
+            ALTER TABLE "P2_Gestion_Clinica_archivoadjunto" ADD COLUMN IF NOT EXISTS "subido_por_id" integer NULL;
         """)
         print("ArchivoAdjunto ensured.")
 
