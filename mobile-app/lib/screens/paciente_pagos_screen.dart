@@ -19,7 +19,7 @@ class PacientePagosScreen extends StatefulWidget {
   _PacientePagosScreenState createState() => _PacientePagosScreenState();
 }
 
-class _PacientePagosScreenState extends State<PacientePagosScreen> {
+class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsBindingObserver {
   final Color primaryBlue = const Color(0xFF2563EB);
   final Color darkBlue = const Color(0xFF0F172A);
   
@@ -40,6 +40,8 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
 
   List<dynamic> get _citasFiltradas {
     return _citas.where((c) {
+      if (c['estado'] == 'CANCELADA') return false;
+
       final matchEstado = _filtroActual == 'TODOS' || (c['estado_pago'] ?? 'PENDIENTE').toString().toUpperCase() == _filtroActual;
       if (!matchEstado) return false;
       
@@ -55,13 +57,23 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _audioRecorder.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Cuando volvemos de Stripe (Navegador), recargamos para ver si ya pagó
+      _loadData();
+    }
   }
 
   Future<void> _toggleRecording() async {

@@ -38,6 +38,8 @@ import PreferenciasNotificaciones from './pages/PreferenciasNotificaciones';
 import HistorialClinico from './pages/HistorialClinico';
 import RegistroEvolucion from './pages/RegistroEvolucion';
 import AnaliticaClinica from './pages/AnaliticaClinica';
+import PagoExitoso from './pages/PagoExitoso';
+import PagoCancelado from './pages/PagoCancelado';
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
@@ -185,6 +187,9 @@ function App() {
                             <AnaliticaClinica />
                         </PrivateRoute>
                     } />
+
+                    <Route path="/pago-exitoso" element={<PagoExitoso />} />
+                    <Route path="/pago-cancelado" element={<PagoCancelado />} />
 
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
