@@ -150,16 +150,29 @@ class HistorialClinicoAPIView(APIView):
         # Diagnóstico Global: Mapeo de Historia Clínica y Última Evolución
         evoluciones_qs = historia.evoluciones.all().order_by('-fecha_sesion')
         
+        import json
         diagnostico_global = None
         if historia.diagnostico_preliminar or evoluciones_qs.exists():
-            diagnostico_global = {
-                "diagnostico_inicial": historia.diagnostico_preliminar or "Sin diagnóstico preliminar",
-                "fecha_inicio": historia.fecha_creacion.strftime('%Y-%m-%d'),
-                "estado": "EN_TRATAMIENTO",
-                "estado_display": "En Tratamiento",
-                "diagnostico_final": "",
-                "fecha_fin": ""
-            }
+            dx_text = historia.diagnostico_preliminar or "Sin diagnóstico preliminar"
+            try:
+                dx_data = json.loads(dx_text)
+                diagnostico_global = {
+                    "diagnostico_inicial": dx_data.get("diagnostico_inicial", ""),
+                    "fecha_inicio": dx_data.get("fecha_inicio", historia.fecha_creacion.strftime('%Y-%m-%d')),
+                    "estado": dx_data.get("estado", "EN_TRATAMIENTO"),
+                    "estado_display": "En Tratamiento" if dx_data.get("estado") == "EN_TRATAMIENTO" else ("Alta" if dx_data.get("estado") == "ALTA" else "Suspendido"),
+                    "diagnostico_final": dx_data.get("diagnostico_final", ""),
+                    "fecha_fin": dx_data.get("fecha_fin", "")
+                }
+            except (json.JSONDecodeError, TypeError):
+                diagnostico_global = {
+                    "diagnostico_inicial": dx_text,
+                    "fecha_inicio": historia.fecha_creacion.strftime('%Y-%m-%d'),
+                    "estado": "EN_TRATAMIENTO",
+                    "estado_display": "En Tratamiento",
+                    "diagnostico_final": "",
+                    "fecha_fin": ""
+                }
 
         evoluciones_data = []
         for evo in evoluciones_qs:
