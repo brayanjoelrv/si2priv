@@ -873,3 +873,66 @@ class ChatbotCitaAPIView(APIView):
         
         respuesta = AIService.responder_chatbot(context_prompt, mensaje)
         return Response({"respuesta": respuesta}, status=status.HTTP_200_OK)
+import csv
+
+class ReportePDFAPIView(APIView):
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
+
+    def get(self, request):
+        tipo = request.query_params.get('tipo', 'citas')
+        start = request.query_params.get('start')
+        end = request.query_params.get('end')
+        
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer)
+        p.drawString(100, 800, f"Reporte de {tipo.capitalize()}")
+        p.drawString(100, 780, f"Desde: {start} Hasta: {end}")
+        
+        y = 750
+        if tipo == 'citas':
+            citas = Cita.objects.filter(psicologo__clinica=request.user.clinica, fecha_hora__date__gte=start, fecha_hora__date__lte=end)
+            for c in citas[:50]:
+                p.drawString(100, y, f"- {c.fecha_hora.strftime('%Y-%m-%d %H:%M')} | {c.paciente.nombre} | {c.estado}")
+                y -= 20
+                if y < 50:
+                    p.showPage()
+                    y = 800
+        else:
+            transacciones = Transaccion.objects.filter(paciente__clinica=request.user.clinica, fecha__gte=start, fecha__lte=end)
+            for t in transacciones[:50]:
+                p.drawString(100, y, f"- {t.fecha.strftime('%Y-%m-%d')} | {t.tipo} | Monto: ${t.monto}")
+                y -= 20
+                if y < 50:
+                    p.showPage()
+                    y = 800
+        
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+        return HttpResponse(buffer, content_type='application/pdf')
+
+class ReporteCSVAPIView(APIView):
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
+
+    def get(self, request):
+        tipo = request.query_params.get('tipo', 'citas')
+        start = request.query_params.get('start')
+        end = request.query_params.get('end')
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="Reporte_{tipo}.csv"'
+        
+        writer = csv.writer(response)
+        
+        if tipo == 'citas':
+            writer.writerow(['Fecha', 'Paciente', 'Motivo', 'Estado', 'Monto'])
+            citas = Cita.objects.filter(psicologo__clinica=request.user.clinica, fecha_hora__date__gte=start, fecha_hora__date__lte=end)
+            for c in citas:
+                writer.writerow([c.fecha_hora.strftime('%Y-%m-%d %H:%M'), c.paciente.nombre, c.motivo, c.estado, c.monto])
+        else:
+            writer.writerow(['Fecha', 'Paciente', 'Tipo', 'Monto', 'Concepto'])
+            transacciones = Transaccion.objects.filter(paciente__clinica=request.user.clinica, fecha__gte=start, fecha__lte=end)
+            for t in transacciones:
+                writer.writerow([t.fecha.strftime('%Y-%m-%d'), t.paciente.nombre, t.tipo, t.monto, t.concepto])
+                
+        return response

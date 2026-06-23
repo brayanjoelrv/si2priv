@@ -18,7 +18,9 @@ from .views import (
     ChatbotCitaAPIView,
     TranscribeAudioMobileAPIView,
     GenerarReporteMobileAPIView,
-    AnaliticaClinicaAPIView
+    AnaliticaClinicaAPIView,
+    ReportePDFAPIView,
+    ReporteCSVAPIView
 )
 
 router = SimpleRouter()
@@ -35,6 +37,8 @@ urlpatterns = [
     path("api/finanzas/", include(router.urls)),
     path("api/finanzas/saldo/<int:paciente_id>/", SaldoPacienteView.as_view(), name="api_saldo_paciente"),
     path("api/finanzas/comprobante/<int:transaccion_id>/pdf/", GenerarComprobantePDFView.as_view(), name="api_comprobante_pdf"),
+    path("api/ia/reporte-pdf/", ReportePDFAPIView.as_view(), name="api_ia_reporte_pdf"),
+    path("api/ia/reporte-csv/", ReporteCSVAPIView.as_view(), name="api_ia_reporte_csv"),
     path("api/reportes/personalizado/", ReportePersonalizadoAPIView.as_view(), name="api_reporte_personalizado"),
     path("api/reportes/voz/", VoiceToReportAPIView.as_view(), name="api_reportes_voz"),
 
