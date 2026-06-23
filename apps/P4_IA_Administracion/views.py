@@ -80,11 +80,45 @@ class AnaliticaClinicaAPIView(APIView):
         # 1. Total Pacientes
         total_pacientes = Paciente.objects.filter(clinica=clinica).count() if clinica else 0
         
-        # 2. Distribución de Estados simulada (ya que no existen en el modelo actual)
-        en_tratamiento = int(total_pacientes * 0.6)
-        alta = int(total_pacientes * 0.2)
-        abandono = int(total_pacientes * 0.1)
-        sin_diagnostico = total_pacientes - (en_tratamiento + alta + abandono)
+        # 2. Distribución de Estados Real
+        from apps.P2_Gestion_Clinica.models import HistoriaClinica
+        import json
+
+        en_tratamiento = 0
+        alta = 0
+        abandono = 0
+        sin_diagnostico = 0
+
+        historias = HistoriaClinica.objects.filter(paciente__clinica=clinica)
+        pacientes_con_historia = set()
+
+        for hist in historias:
+            pacientes_con_historia.add(hist.paciente_id)
+            estado = None
+            if hist.diagnostico_preliminar:
+                try:
+                    dx_data = json.loads(hist.diagnostico_preliminar)
+                    if isinstance(dx_data, dict):
+                        estado = dx_data.get('estado')
+                except (json.JSONDecodeError, TypeError):
+                    estado = 'EN_TRATAMIENTO'
+            
+            if not estado and hist.evoluciones.exists():
+                estado = 'EN_TRATAMIENTO'
+
+            estado_upper = str(estado).upper() if estado else ''
+            
+            if estado_upper == 'ALTA':
+                alta += 1
+            elif estado_upper == 'ABANDONO':
+                abandono += 1
+            elif estado_upper == 'EN_TRATAMIENTO' or estado_upper == 'EN TRATAMIENTO':
+                en_tratamiento += 1
+            else:
+                sin_diagnostico += 1
+
+        # Contabilizar pacientes que ni siquiera tienen historia
+        sin_diagnostico += total_pacientes - len(pacientes_con_historia)
 
         # 3. Evoluciones Reales
         evoluciones = EvolucionClinica.objects.filter(
