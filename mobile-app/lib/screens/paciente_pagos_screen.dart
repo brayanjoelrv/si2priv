@@ -108,7 +108,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
         }
       }
     } catch (e) {
-      print('Error recording: \$e');
+      print('Error recording: $e');
       setState(() {
         _isRecording = false;
         _isProcessingVoice = false;
@@ -124,7 +124,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
     } catch (e) {
       setState(() => _isProcessingVoice = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al transcribir: \$e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error al transcribir: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -176,7 +176,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
     } catch (e) {
       setState(() => _isProcessingVoice = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al generar: \$e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error al generar: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -217,7 +217,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
       await OpenFilex.open(file.path);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al abrir el archivo: \$e')),
+        SnackBar(content: Text('Error al abrir el archivo: $e')),
       );
     }
   }
