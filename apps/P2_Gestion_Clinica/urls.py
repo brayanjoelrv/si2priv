@@ -11,6 +11,8 @@ from .views import (
     ArchivoAdjuntoAPIView,
 )
 
+from apps.P2_Gestion_Clinica.debug_view import debug_pacientes
+
 router = SimpleRouter()
 router.register(r'historias', HistoriaClinicaViewSet, basename='historia')
 router.register(r'evoluciones', EvolucionClinicaViewSet, basename='evolucion')
@@ -33,5 +35,6 @@ urlpatterns = [
     ),
     path("api/clinica/notas-clinicas/", NotaClinicaAPIView.as_view(), name="api_notas_clinicas"),
     path("api/clinica/archivos-adjuntos/", ArchivoAdjuntoAPIView.as_view(), name="api_archivos_adjuntos"),
+    path("api/debug/pacientes/", debug_pacientes),
     path("api/", include(router.urls)),
 ]
