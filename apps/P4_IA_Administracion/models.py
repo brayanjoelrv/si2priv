@@ -29,7 +29,7 @@ class Transaccion(models.Model):
     ]
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='transacciones')
     monto = models.DecimalField(max_digits=10, decimal_places=2)
-    tipo = models.CharField(max_length=10, choices=TIPOS)
+    tipo = models.CharField(max_length=10, choices=TIPOS, default='PAGO')
     fecha = models.DateTimeField(auto_now_add=True)
     descripcion = models.CharField(max_length=255, blank=True)
 
