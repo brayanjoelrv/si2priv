@@ -40,7 +40,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
 
   List<dynamic> get _citasFiltradas {
     return _citas.where((c) {
-      if (c['estado'] == 'CANCELADA') return false;
+      if ((c['estado'] ?? '').toString().toUpperCase() == 'CANCELADA') return false;
 
       final matchEstado = _filtroActual == 'TODOS' || (c['estado_pago'] ?? 'PENDIENTE').toString().toUpperCase() == _filtroActual;
       if (!matchEstado) return false;
@@ -350,9 +350,12 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
             ? const CircularProgressIndicator(color: Colors.white)
             : Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
@@ -458,19 +461,6 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> with WidgetsB
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text('Pagar Ahora', style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton(
-                        onPressed: () => _cancelarCita(context, citaData),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text('Cancelar', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
