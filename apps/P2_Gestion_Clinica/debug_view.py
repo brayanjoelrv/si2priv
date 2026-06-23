@@ -1,50 +1,40 @@
 from django.http import HttpResponse, JsonResponse
 import traceback
-import json
 
 def debug_pacientes(request):
-    """Debug view to simulate patient creation to catch the 500 error."""
     try:
-        from apps.P2_Gestion_Clinica.models import Paciente, HistoriaClinica
-        from apps.P1_Identidad_Acceso.models import Clinica, Usuario
-        from apps.P4_IA_Administracion.models import LogAuditoria
-        
-        # 1. Get the admin user and clinica
-        user = Usuario.objects.filter(username='admin').first() or Usuario.objects.first()
-        clinica = user.clinica if user else Clinica.objects.first()
-        
-        if not clinica:
-            return JsonResponse({'error': 'No clinica found'})
-        
-        # 2. Try to create a dummy patient
-        import random
-        ci_dummy = str(random.randint(1000000, 9999999))
-        paciente = Paciente(
-            nombre='Test Simulation',
-            ci=ci_dummy,
-            fecha_nacimiento='2000-01-01',
-            telefono='12345678',
-            clinica=clinica
-        )
-        paciente.save()
-        
-        # 3. Create HistoriaClinica
-        HistoriaClinica.objects.get_or_create(paciente=paciente)
-        
-        # 4. Create LogAuditoria
-        LogAuditoria.objects.create(
-            usuario=user,
-            accion=f"Registró un nuevo paciente (API): {paciente.nombre}",
-        )
-        
-        # 5. Serialize
+        from apps.P2_Gestion_Clinica.models import Paciente, HistoriaClinica, NotaClinica, ArchivoAdjunto
         from apps.P2_Gestion_Clinica.serializers import PacienteSerializer
-        serializer = PacienteSerializer(paciente)
-        data = serializer.data
+        from django.db import connection
         
-        # Cleanup
-        paciente.delete()
+        results = {}
         
-        return JsonResponse({'success': True, 'data': data})
+        # Try to serialize the exact queryset that the list view uses
+        # The list view does: Paciente.objects.filter(clinica=user.clinica).order_by("nombre")
+        # We will try to serialize EVERY patient to find which one crashes.
+        pacientes = Paciente.objects.all()
+        results['total_pacientes'] = pacientes.count()
+        results['errors'] = []
+        
+        for p in pacientes:
+            try:
+                serializer = PacienteSerializer(p)
+                data = serializer.data
+            except Exception as e:
+                results['errors'].append({
+                    'paciente_id': p.id,
+                    'paciente_nombre': p.nombre,
+                    'error': str(e),
+                    'traceback': traceback.format_exc()
+                })
+        
+        # Check P4_IA_Administracion models since there's a migration warning
+        from apps.P4_IA_Administracion.models import LogAuditoria
+        try:
+            results['log_count'] = LogAuditoria.objects.count()
+        except Exception as e:
+            results['log_error'] = str(e)
+            
+        return JsonResponse(results, json_dumps_params={'indent': 2})
     except Exception as e:
         return HttpResponse("FATAL ERROR:\n" + traceback.format_exc(), status=500, content_type='text/plain')
